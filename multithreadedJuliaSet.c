@@ -12,8 +12,8 @@
 #define ONE_BYTE 1
 #define LOG_2		log(2.)
 #define NB_THREADS  8
-#define PARCEL_WIDTH 250
-#define PARCEL_HEIGHT 250
+#define PARCEL_WIDTH 100
+#define PARCEL_HEIGHT 100
 #define HEADER_SIZE 54
 #define ARRAY_START 0
 
@@ -99,11 +99,11 @@ typedef struct
 void fillParcel(parcelInput *myParcel, juliaInputs *mainInputs, unsigned char *pixels)
 {
 	int density = mainInputs->density;
-	int totalWidth = (int)((double)density*(mainInputs->maxX - mainInputs->minY));
-	
+	int totalWidth = (int)((double)density*(mainInputs->maxX - mainInputs->minX));
+	//int totalHeight = (int)((double)density*(mainInputs->maxY - mainInputs->minY));
 	
 	double w = UNIT/((double)(density));
-	
+	//printf("hi\n");
 	
 	int oversample = mainInputs->oversample;
 	int nbOversample = oversample*oversample;
@@ -124,10 +124,10 @@ void fillParcel(parcelInput *myParcel, juliaInputs *mainInputs, unsigned char *p
 	
 	for(int row = myParcel->height - 1; row >= ARRAY_START; row--) { // myParcel->height - 1 is the "index" of the last row
 		y0 = mainInputs->minY+(row+myParcel->y0)*w;
-		//printf("%f\n",y0);
         for(int column = ARRAY_START; column < myParcel->width; column++) {
 			x0 = mainInputs->minX+(column+myParcel->x0)*w;
-			int p = ((row+myParcel->y0) * totalWidth + column +myParcel->x0) * PIXEL_SIZE;
+			//int p = ((column+myParcel->x0) * totalHeight + row + myParcel->y0) * PIXEL_SIZE; //ERROR
+			int p = ((row+myParcel->y0) * totalWidth + column + myParcel->x0) * PIXEL_SIZE; //ERROR
 			red = COLOR_RESET;
 			green = COLOR_RESET;
 			blue = COLOR_RESET;
@@ -165,6 +165,7 @@ void fillParcel(parcelInput *myParcel, juliaInputs *mainInputs, unsigned char *p
 					}
 				}
 			}
+			//printf("p: %d\n",p);
 			*(pixels+p+BLUE_OFFSET) = (unsigned char)(blue/nbOversample); //blue
 			*(pixels+p+GREEN_OFFSET) = (unsigned char)(green/nbOversample);//green
 			*(pixels+p+RED_OFFSET) = (unsigned char)(red/nbOversample);//red
@@ -329,14 +330,14 @@ int main()
 	juliaInputs * myInput = malloc(sizeof(juliaInputs));
 	
 	myInput->c = -0.70176 - 0.3842*I;
-	myInput->minX = -2.0;
-	myInput->maxX = 2.01;
-	myInput->minY = -2.;
-	myInput->maxY = 2.01;
-	myInput->density = 2500;
+	myInput->minX = -1.;
+	myInput->maxX = 1.;
+	myInput->minY = -1.1;
+	myInput->maxY = 1.09;
+	myInput->density = 500;
 	myInput->maxRadius = 20.;
 	myInput->maxIter = 300;
-	myInput->oversample = 2;
+	myInput->oversample = 1;
 	
 	
 	int * nextTaskInd = calloc(ONE_MEMORY_BLOCK,sizeof(int));
@@ -371,7 +372,7 @@ int main()
 	
 	parcelInput * myParcels[nbParcels];
 	
-	int ind;
+	int ind = 0;
 	
 	for (int x = ARRAY_START; x<nbWholeParcelsX;x++)
 	{
@@ -422,7 +423,7 @@ int main()
 		
 	}
 	
-	if(hasXYleftover ==TRUE)	
+	if(hasXYleftover == TRUE)	
 	{
 		ind++;
 		parcelInput * parcel = malloc(sizeof(parcelInput));
@@ -433,12 +434,17 @@ int main()
 		myParcels[ind] = parcel;
 		
 	}
+	printf("sizeX : %d\n", sizeX);
+	printf("sizeY : %d\n", sizeY);
 	
-	int size = sizeX*sizeY*PIXEL_SIZE;
-	unsigned char *pixels;
+	int size = sizeX*sizeY;
+	printf("size: %d\n", size);
 	
-	pixels = malloc(size);
 	
+	
+	unsigned char * pixels = calloc(size, PIXEL_SIZE);
+	
+	//printf("size : %d\n", size);
 	
 	
 	
@@ -473,7 +479,7 @@ int main()
 	
 	fwrite(header, sizeof(char), HEADER_SIZE, fout);
     
-	fwrite(pixels, sizeof(char), size, fout);
+	fwrite(pixels, sizeof(char), size*PIXEL_SIZE, fout);
 	
 	free(header);
     free(pixels);
