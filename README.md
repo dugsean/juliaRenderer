@@ -11,7 +11,7 @@ Ensure you have a C compiler installed to build and run the program.
 Compile the code using the following command:
 
 ```bash
-gcc julia_set_renderer.c -o julia_set_renderer -lm -pthread
+gcc multithreadedJuliaSet.c -o julia_set_renderer -lm -pthread
 ```
 
 ## Usage
